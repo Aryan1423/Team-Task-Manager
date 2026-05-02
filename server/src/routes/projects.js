@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
+import { body, query } from 'express-validator';
 import { createProject, deleteProject, getProject, listProjects, updateProject } from '../controllers/projectController.js';
 import { createTask, deleteTask, getTask, listTasks, updateTask } from '../controllers/taskController.js';
 import { addMember, listMembers, removeMember, updateMember } from '../controllers/teamController.js';
@@ -26,12 +26,18 @@ router.put('/:id', requireProjectRole('ADMIN'), validate([
 ]), updateProject);
 router.delete('/:id', requireProjectRole('ADMIN'), deleteProject);
 
-router.get('/:id/tasks', requireProjectRole('MEMBER'), listTasks);
+router.get('/:id/tasks', requireProjectRole('MEMBER'), validate([
+  query('status').optional().isIn(statusValues),
+  query('priority').optional().isIn(priorityValues),
+  query('assignee').optional().isUUID(),
+  query('search').optional().trim().isLength({ max: 200 })
+]), listTasks);
 router.post('/:id/tasks', requireProjectRole('MEMBER'), validate([
   body('title').trim().isLength({ min: 3, max: 200 }).withMessage('Task title must be 3-200 characters'),
   body('description').optional({ values: 'falsy' }).isLength({ max: 2000 }),
   body('status').optional().isIn(statusValues),
   body('priority').optional().isIn(priorityValues),
+  body('assigneeId').optional({ values: 'falsy' }).isUUID(),
   body('dueDate').optional({ values: 'falsy' }).isISO8601()
 ]), createTask);
 router.get('/:id/tasks/:taskId', requireProjectRole('MEMBER'), getTask);
@@ -40,6 +46,7 @@ router.put('/:id/tasks/:taskId', requireProjectRole('MEMBER'), validate([
   body('description').optional({ values: 'falsy' }).isLength({ max: 2000 }),
   body('status').optional().isIn(statusValues),
   body('priority').optional().isIn(priorityValues),
+  body('assigneeId').optional({ values: 'falsy' }).isUUID(),
   body('dueDate').optional({ values: 'falsy' }).isISO8601()
 ]), updateTask);
 router.delete('/:id/tasks/:taskId', requireProjectRole('ADMIN'), deleteTask);

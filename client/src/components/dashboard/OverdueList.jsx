@@ -1,12 +1,12 @@
 import React from 'react';
 import Badge from '../common/Badge';
-import { format, isPast } from 'date-fns';
+import { format } from 'date-fns';
 
 const OverdueList = ({ tasks }) => {
   if (!tasks || tasks.length === 0) {
     return (
-      <div className="glass-panel" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-        <p>No overdue tasks! Great job.</p>
+      <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+        <p style={{ fontSize: '0.875rem' }}>🎉 No overdue tasks! Great job.</p>
       </div>
     );
   }
@@ -19,8 +19,8 @@ const OverdueList = ({ tasks }) => {
       </div>
       <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
         {tasks.map(task => (
-          <div key={task.id} style={{ 
-            padding: '1rem 1.5rem', 
+          <div key={task.id} style={{
+            padding: '1rem 1.5rem',
             borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             justifyContent: 'space-between',
@@ -35,7 +35,7 @@ const OverdueList = ({ tasks }) => {
               <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>{task.title}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Project: {task.project}</div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
               <Badge variant={task.priority}>{task.priority}</Badge>
               <div style={{ fontSize: '0.75rem', color: 'var(--danger)' }}>
                 {format(new Date(task.dueDate), 'MMM d, yyyy')}

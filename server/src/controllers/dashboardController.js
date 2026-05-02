@@ -11,6 +11,16 @@ export const getStats = async (req, res, next) => {
     });
     const projectIds = memberships.map((item) => item.projectId);
 
+    if (projectIds.length === 0) {
+      return res.json({
+        totalProjects: 0,
+        totalTasks: 0,
+        tasksByStatus: { ...emptyStatus },
+        tasksByPriority: { ...emptyPriority },
+        overdueTasks: []
+      });
+    }
+
     const [tasks, overdueTasks] = await Promise.all([
       prisma.task.findMany({ where: { projectId: { in: projectIds } } }),
       prisma.task.findMany({

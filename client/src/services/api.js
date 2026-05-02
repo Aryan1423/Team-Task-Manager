@@ -7,7 +7,6 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to attach token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -19,14 +18,15 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle 401
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Handle unauthorized (e.g., redirect to login, clear storage)
-      localStorage.removeItem('accessToken');
-      window.location.href = '/login';
+      const isOnAuthPage = ['/login', '/signup'].includes(window.location.pathname);
+      if (!isOnAuthPage) {
+        localStorage.removeItem('accessToken');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, FolderKanban, Settings } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Projects', path: '/projects', icon: FolderKanban },
@@ -10,16 +10,17 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside style={{
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`} style={{
       width: '240px',
       backgroundColor: 'var(--bg-secondary)',
       borderRight: '1px solid var(--border-color)',
       padding: '1.5rem 1rem',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      flexShrink: 0,
     }}>
       <div style={{ marginBottom: '2rem', padding: '0 0.5rem' }}>
-        <h2 className="gradient-text" style={{ fontSize: '1.25rem', fontWeight: 700 }}>TeamTask</h2>
+        <h2 className="gradient-text" style={{ fontSize: '1.25rem', fontWeight: 700 }}>Task Manager</h2>
       </div>
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {navItems.map((item) => {
@@ -28,6 +29,8 @@ const Sidebar = () => {
             <NavLink
               key={item.path}
               to={item.path}
+              end={item.path === '/'}
+              onClick={onClose}
               style={({ isActive }) => ({
                 display: 'flex',
                 alignItems: 'center',
@@ -40,8 +43,12 @@ const Sidebar = () => {
                 transition: 'all 0.2s'
               })}
             >
-              <Icon size={20} color={item.path === window.location.pathname ? 'var(--accent-primary)' : 'currentColor'} />
-              {item.name}
+              {({ isActive }) => (
+                <>
+                  <Icon size={20} color={isActive ? 'var(--accent-primary)' : 'currentColor'} />
+                  {item.name}
+                </>
+              )}
             </NavLink>
           );
         })}

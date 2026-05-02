@@ -1,24 +1,16 @@
 import bcrypt from 'bcryptjs';
 import prisma from '../config/db.js';
 import ApiError from '../utils/ApiError.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
+import { generateAccessToken } from '../utils/jwt.js';
 
-const publicUser = (user, role = 'ADMIN') => ({
+const publicUser = (user) => ({
   id: user.id,
   name: user.name,
   email: user.email,
-  role
 });
 
 const sendAuth = (res, user) => {
   const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 30 * 24 * 60 * 60 * 1000
-  });
   res.json({ accessToken, user: publicUser(user) });
 };
 
@@ -61,4 +53,36 @@ export const me = async (req, res) => {
 export const logout = (_req, res) => {
   res.clearCookie('refreshToken');
   res.json({ message: 'Logged out' });
+};
+
+export const updateProfile = async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { name: name.trim() }
+    });
+    res.json({ user: publicUser(user) });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) throw new ApiError(404, 'User not found');
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) throw new ApiError(400, 'Current password is incorrect');
+
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { password: await bcrypt.hash(newPassword, 12) }
+    });
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    next(error);
+  }
 };

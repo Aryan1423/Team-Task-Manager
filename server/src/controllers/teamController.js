@@ -12,6 +12,16 @@ const memberPayload = (member) => ({
   }
 });
 
+const ensureNotLastAdmin = async (projectId, memberId) => {
+  const adminCount = await prisma.projectMember.count({
+    where: { projectId, role: 'ADMIN' }
+  });
+  const member = await prisma.projectMember.findUnique({ where: { id: memberId } });
+  if (member?.role === 'ADMIN' && adminCount <= 1) {
+    throw new ApiError(400, 'Cannot remove or demote the last admin of a project');
+  }
+};
+
 export const listMembers = async (req, res, next) => {
   try {
     const members = await prisma.projectMember.findMany({
@@ -31,6 +41,11 @@ export const addMember = async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (!user) throw new ApiError(404, 'No user found with that email');
 
+    const existing = await prisma.projectMember.findUnique({
+      where: { userId_projectId: { userId: user.id, projectId: req.params.id } }
+    });
+    if (existing) throw new ApiError(409, 'User is already a member of this project');
+
     const member = await prisma.projectMember.create({
       data: { userId: user.id, projectId: req.params.id, role },
       include: { user: true }
@@ -48,6 +63,10 @@ export const updateMember = async (req, res, next) => {
     });
     if (!existing) throw new ApiError(404, 'Member not found');
 
+    if (req.body.role !== 'ADMIN' && existing.role === 'ADMIN') {
+      await ensureNotLastAdmin(req.params.id, req.params.memberId);
+    }
+
     const member = await prisma.projectMember.update({
       where: { id: req.params.memberId },
       data: { role: req.body.role },
@@ -64,6 +83,9 @@ export const removeMember = async (req, res, next) => {
     const member = await prisma.projectMember.findUnique({ where: { id: req.params.memberId } });
     if (!member || member.projectId !== req.params.id) throw new ApiError(404, 'Member not found');
     if (member.userId === req.user.id) throw new ApiError(400, 'You cannot remove yourself');
+
+    await ensureNotLastAdmin(req.params.id, req.params.memberId);
+
     await prisma.projectMember.delete({ where: { id: req.params.memberId } });
     res.json({ message: 'Member removed' });
   } catch (error) {

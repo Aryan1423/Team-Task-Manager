@@ -1,13 +1,27 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import api from '../services/api';
 
 export const useApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const clearError = useCallback(() => {
+    if (mountedRef.current) setError(null);
+  }, []);
 
   const request = useCallback(async (method, url, data = null) => {
-    setLoading(true);
-    setError(null);
+    if (mountedRef.current) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const response = await api({
         method,
@@ -17,12 +31,12 @@ export const useApi = () => {
       return response.data;
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || 'An error occurred';
-      setError(errorMsg);
+      if (mountedRef.current) setError(errorMsg);
       throw err;
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 
-  return { loading, error, request };
+  return { loading, error, request, clearError };
 };

@@ -1,6 +1,9 @@
 import prisma from '../config/db.js';
 import ApiError from '../utils/ApiError.js';
 
+const statusValues = ['TODO', 'IN_PROGRESS', 'DONE'];
+const priorityValues = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+
 const taskPayload = (task) => ({
   id: task.id,
   title: task.title,
@@ -22,6 +25,9 @@ const ensureAssignee = async (projectId, assigneeId) => {
 export const listTasks = async (req, res, next) => {
   try {
     const { status, priority, assignee, search } = req.query;
+    if (status && !statusValues.includes(status)) throw new ApiError(400, 'Invalid task status');
+    if (priority && !priorityValues.includes(priority)) throw new ApiError(400, 'Invalid task priority');
+
     const tasks = await prisma.task.findMany({
       where: {
         projectId: req.params.id,
@@ -42,6 +48,9 @@ export const listTasks = async (req, res, next) => {
 export const createTask = async (req, res, next) => {
   try {
     const { title, description = '', status = 'TODO', priority = 'MEDIUM', assigneeId, dueDate } = req.body;
+    if (!statusValues.includes(status)) throw new ApiError(400, 'Invalid task status');
+    if (!priorityValues.includes(priority)) throw new ApiError(400, 'Invalid task priority');
+
     await ensureAssignee(req.params.id, assigneeId);
     const task = await prisma.task.create({
       data: {
@@ -88,6 +97,9 @@ export const updateTask = async (req, res, next) => {
     for (const field of ['title', 'description', 'status', 'priority']) {
       if (req.body[field] !== undefined) data[field] = typeof req.body[field] === 'string' ? req.body[field].trim() : req.body[field];
     }
+    if (data.status && !statusValues.includes(data.status)) throw new ApiError(400, 'Invalid task status');
+    if (data.priority && !priorityValues.includes(data.priority)) throw new ApiError(400, 'Invalid task priority');
+
     if (req.body.assigneeId !== undefined) {
       await ensureAssignee(req.params.id, req.body.assigneeId);
       data.assigneeId = req.body.assigneeId || null;

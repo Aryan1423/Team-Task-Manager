@@ -1,6 +1,7 @@
 
-# Local env files
 server/.env
 client/.env
 .env
 node_modules/
+dist/
+client/dist/

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext();
@@ -28,29 +28,32 @@ export const AuthProvider = ({ children }) => {
     const response = await api.post('/auth/login', { email, password });
     localStorage.setItem('accessToken', response.data.accessToken);
     setUser(response.data.user);
-    return true;
+    return response.data.user;
   };
 
   const signup = async (name, email, password) => {
     const response = await api.post('/auth/signup', { name, email, password });
     localStorage.setItem('accessToken', response.data.accessToken);
     setUser(response.data.user);
-    return true;
+    return response.data.user;
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
     } catch (error) {
-      console.error('Logout failed:', error);
+      void error;
     }
     localStorage.removeItem('accessToken');
     setUser(null);
-    window.location.href = '/login';
-  };
+  }, []);
+
+  const updateUser = useCallback((updatedUser) => {
+    setUser(updatedUser);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, signup, logout, updateUser }}>
       {!loading && children}
     </AuthContext.Provider>
   );

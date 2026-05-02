@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 
-const Input = forwardRef(({ label, error, ...props }, ref) => {
+const Input = forwardRef(({ label, error, style: styleProp, onFocus, onBlur, ...props }, ref) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
       {label && <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>{label}</label>}
@@ -14,15 +14,24 @@ const Input = forwardRef(({ label, error, ...props }, ref) => {
           color: 'var(--text-primary)',
           outline: 'none',
           transition: 'border-color 0.2s',
-          ...props.style
+          width: '100%',
+          ...styleProp
         }}
-        onFocus={(e) => { if (!error) e.target.style.borderColor = 'var(--accent-primary)'; }}
-        onBlur={(e) => { if (!error) e.target.style.borderColor = 'var(--border-color)'; }}
+        onFocus={(e) => {
+          if (!error) e.target.style.borderColor = 'var(--accent-primary)';
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          if (!error) e.target.style.borderColor = 'var(--border-color)';
+          onBlur?.(e);
+        }}
         {...props}
       />
       {error && <span style={{ color: 'var(--danger)', fontSize: '0.75rem' }}>{error}</span>}
     </div>
   );
 });
+
+Input.displayName = 'Input';
 
 export default Input;
