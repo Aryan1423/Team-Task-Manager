@@ -2,6 +2,9 @@ import 'dotenv/config';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
+import { existsSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import dashboardRoutes from './routes/dashboard.js';
 import projectRoutes from './routes/projects.js';
@@ -9,6 +12,8 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const clientDistPath = path.resolve(__dirname, '../../client/dist');
 
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
@@ -22,9 +27,20 @@ app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/projects', projectRoutes);
 
+if (existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+
+    return res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
+
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(port,"0.0.0.0", () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`API server listening on http://localhost:${port}`);
 });

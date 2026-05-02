@@ -33,3 +33,4 @@ The app runs on `http://localhost:3000`; Vite proxies `/api` to the backend.
 - Create projects from the Projects page.
 - Open a project, add tasks, edit task details, and use the inline status action to move work forward.
 - Dashboard stats are calculated from the authenticated user's projects.
+
