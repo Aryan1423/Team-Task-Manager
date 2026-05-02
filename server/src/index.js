@@ -25,6 +25,6 @@ app.use('/api/projects', projectRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(port, () => {
+app.listen(port,"0.0.0.0", () => {
   console.log(`API server listening on http://localhost:${port}`);
 });
