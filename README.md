@@ -443,6 +443,3 @@ Check that:
 
 ---
 
-## License
-
-This project is private by default. Add a license file if you plan to make it public.
